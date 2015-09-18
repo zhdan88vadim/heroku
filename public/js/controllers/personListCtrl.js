@@ -13,9 +13,9 @@ managerControllers.controller('ModalController', function($scope, close) {
 /* Controller - PersonListCtrl */
 
 managerControllers.controller('PersonListCtrl', 
-	['$scope', '$q', '$location', '$userService', '$filter', 'alertsService', 'ModalService', personListCtrl]);
+	['$scope', '$q', '$location', '$userService', '$filter', 'alertsService', 'ModalService', '$Constants', personListCtrl]);
 
-function personListCtrl ($scope, $q, $location, $userService, $filter, alertsService, ModalService) {
+function personListCtrl ($scope, $q, $location, $userService, $filter, alertsService, ModalService, $Constants) {
 	
 	function loadUsers() {
 		$userService.getUsers().success(function(data) {
@@ -38,7 +38,6 @@ function personListCtrl ($scope, $q, $location, $userService, $filter, alertsSer
 
 	$scope.model.selectPhoneType = $scope.model.phoneTypes[0];
 
-
 	$scope.order = function(predicate) {
 		$scope.model.reverse = ($scope.model.predicate === predicate) ? !$scope.model.reverse : false;
 		$scope.model.predicate = predicate;
@@ -48,15 +47,36 @@ function personListCtrl ($scope, $q, $location, $userService, $filter, alertsSer
 		console.log('Call test method from personListCtrl.');
 	}
 
+	$scope.fillTestData = function() {
+		$scope.model.editPerson = {
+			"firstName": "First Name Test",
+			"lastName": "Last Name Test",
+			"age": 28,
+			"address": {
+				"streetAddress": "Mavra 45",
+				"city": "Minsk",
+				"state": "450",
+				"postalCode": "220100"
+			}
+		};
+
+		$scope.model.personHomePhone = '220-000-3344';
+		$scope.model.personFaxPhone = '220-300-0000';
+
+		$scope.forms.form.$dirty = true;
+		$scope.forms.form.$pristine = false;
+	}
+
 	$scope.addPerson = function() {
+		$scope.forms.form.$setUntouched();
+		$scope.forms.form.$setPristine();
+		
 		// Clean form data.
 		$scope.model.editPerson = {};
 		$scope.model.editPerson.address = {};
 		$scope.model.personHomePhone = null;
 		$scope.model.personFaxPhone = null;
 
-		$scope.forms.form.$setUntouched();
-		$scope.forms.form.$setPristine();
 
 		$scope.model.dialog.header = 'Add Person';
 		$scope.model.dialog.isAddForm = true;
@@ -66,15 +86,18 @@ function personListCtrl ($scope, $q, $location, $userService, $filter, alertsSer
 	$scope.editPerson = function(person, $event) {
 		$event.stopPropagation();
 
+		$scope.forms.form.$setUntouched();
+		$scope.forms.form.$setPristine();
+		
 		$scope.model.editPerson = person;
 		
 		$scope.model.dialog.header = person.firstName + ' ' + person.lastName;
 		$scope.model.personHomePhone = $filter('phoneNumber')(person.phoneNumber, { type: 'home' });
 		$scope.model.personFaxPhone = $filter('phoneNumber')(person.phoneNumber, { type: 'fax' });
-		
+
 		$scope.model.dialog.isAddForm = false;
 		$scope.showModal = true;
-	};
+	}
 
 	$scope.deletePerson = function(person) {
 		
@@ -82,6 +105,10 @@ function personListCtrl ($scope, $q, $location, $userService, $filter, alertsSer
 			templateUrl: 'confirm-modal.html',
 			controller: "ModalController"
 		}).then(function(modal) {
+
+			modal.scope.model = {};
+			modal.scope.model.firstName = person.firstName;
+			modal.scope.model.lastName = person.lastName;
 
 			modal.element.modal();
 
@@ -91,24 +118,21 @@ function personListCtrl ($scope, $q, $location, $userService, $filter, alertsSer
 					promise = $userService.delete(person.id);
 
 					promise.success(function() {
-						alertsService.RenderSuccessMessage('<strong>Update was successfull!</strong>');
+						alertsService.RenderSuccessMessage($Constants.update_successfull);
 						loadUsers();
 					}).error(function() {
-						alertsService.RenderErrorMessage('<strong>Update was error!</strong>');
+						alertsService.RenderErrorMessage($Constants.update_error);
 					});
 				}
 			});
 		});
-	};
+	}
 
 	$scope.personAddUpdate = function() {
 		// Check valid form.
 		if (!$scope.forms.form.$valid) return;
 
 		var person = $scope.model.editPerson;
-		
-		console.log(person);
-
 		person.phoneNumber = [{ 
 			"type":"fax", 
 			"number": $scope.model.personFaxPhone 
@@ -126,14 +150,14 @@ function personListCtrl ($scope, $q, $location, $userService, $filter, alertsSer
 			promise = $userService.update(person);
 
 		promise.success(function() {
-			alertsService.RenderSuccessMessage('<strong>Update was successfull!</strong>');
+			alertsService.RenderSuccessMessage($Constants.update_successfull);
 			loadUsers();
 		}).error(function() {
-			alertsService.RenderErrorMessage('<strong>Update was error!</strong>');
+			alertsService.RenderErrorMessage($Constants.update_error);
 		});
 
 		$scope.showModal = false;
-	};
+	}
 
 	loadUsers();
 }

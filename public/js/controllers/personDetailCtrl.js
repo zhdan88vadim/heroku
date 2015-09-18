@@ -42,7 +42,8 @@ function personDetailCtrl($scope, $q, $location, $userService, $filter, $routePa
 
 	$scope.personUpdate = function() {
 
-		var person = updatePhone($scope.model.person, 
+		var person = updatePhone(
+			$scope.model.person, 
 			$scope.model.personHomePhone, 
 			$scope.model.personFaxPhone);
 
